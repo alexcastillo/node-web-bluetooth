@@ -1,10 +1,10 @@
-const noble = require('noble');
-const {serviceToUuid, toNobleUuid} = require('./utils');
+const noble = require('./noble');
+const { serviceToUuid, toNobleUuid } = require('./utils');
 const getAvailability = require('./getAvailability');
 const BluetoothDevice = require('./BluetoothDevice');
 const InteractiveRequestDeviceDelegate = require('./InteractiveRequestDeviceDelegate');
 
-function isFilteredDevice({name, uuids}, filter) {
+function isFilteredDevice({ name, uuids }, filter) {
 	if (filter.services) {
 		const filterUuids = filter.services.map(serviceToUuid);
 		for (let i = 0; i < filterUuids.length; i++) {
@@ -13,19 +13,24 @@ function isFilteredDevice({name, uuids}, filter) {
 			}
 		}
 	}
-	if (filter.name &&
-		(filter.name !== name)) {
+	if (filter.name && filter.name !== name) {
 		return false;
 	}
-	if (filter.namePrefix &&
-		(filter.namePrefix !== name.substring(0, filter.namePrefix.length))) {
+	if (
+		filter.namePrefix &&
+		filter.namePrefix !== name.substring(0, filter.namePrefix.length)
+	) {
 		return false;
 	}
 	if (filter.manufacturerData) {
-		throw new Error('filter.manufacturerData spec is unstable and not yet supported');
+		throw new Error(
+			'filter.manufacturerData spec is unstable and not yet supported'
+		);
 	}
 	if (filter.serviceData) {
-		throw new Error('filter.serviceData spec is unstable and not yet supported');
+		throw new Error(
+			'filter.serviceData spec is unstable and not yet supported'
+		);
 	}
 	return true;
 }
@@ -42,40 +47,45 @@ function isFilteredDevice({name, uuids}, filter) {
  * @param {bool} options.acceptAllDevices - NOT YET SUPPORTED
  * @return {Promise} A Promise to a BluetoothDevice object.
  */
-async function requestDevice({ // eslint-disable-line
+async function requestDevice({
+	// eslint-disable-line
 	filters = [],
 	optionalServices,
 	acceptAllDevices,
 	delegate
 } = {}) {
-	if (optionalServices) throw new Error('optionalServices is not yet supported');
-	if (acceptAllDevices) throw new Error('acceptAllDevices is not yet supported');
+	if (optionalServices)
+		throw new Error('optionalServices is not yet supported');
+	if (acceptAllDevices)
+		throw new Error('acceptAllDevices is not yet supported');
 
 	delegate = delegate || new InteractiveRequestDeviceDelegate();
 
 	const serviceUUIDs = [];
-	filters.forEach((filter) => {
+	filters.forEach(filter => {
 		if (filter.services) {
-			filter.services.forEach((service) => {
+			filter.services.forEach(service => {
 				serviceUUIDs.push(toNobleUuid(serviceToUuid(service)));
 			});
 		}
 	});
 
 	const isAvailable = await getAvailability();
-	if (!isAvailable) throw new Error('Bluetooth is not enabled/available');
+	if (!isAvailable)
+		throw new Error('Bluetooth is not enabled/available');
 
 	const devices = [];
-	const onDiscover = (peripheral) => {
+	const onDiscover = peripheral => {
 		const device = new BluetoothDevice(peripheral);
-		const filter = filters.find((filter) => isFilteredDevice(device, filter));
+		const filter = filters.find(filter =>
+			isFilteredDevice(device, filter)
+		);
 		if (!filters.length || filter) {
-			const existingDevice = devices.find((d) => device.id === d.id);
+			const existingDevice = devices.find(d => device.id === d.id);
 			if (existingDevice) {
 				existingDevice._updateFromDuplicate(device);
 				delegate.onUpdateDevice(existingDevice);
-			}
-			else {
+			} else {
 				devices.push(device);
 				delegate.onAddDevice(device);
 			}
@@ -88,8 +98,7 @@ async function requestDevice({ // eslint-disable-line
 		delegate.onStartScan();
 		noble.startScanning(serviceUUIDs, true);
 		resultDevice = await delegate.getDevice();
-	}
-	catch (err) {
+	} catch (err) {
 		noble.removeListener('discover', onDiscover);
 		throw err;
 	}

@@ -1,12 +1,4 @@
-const { platform } = require('os');
-
-let noble;
-if (platform() === 'darwin') {
-	noble = require('noble-mac');
-} else {
-	noble = require('noble');
-}
-
+const noble = require('./noble');
 const EventTarget = require('./EventTarget');
 const requestDevice = require('./requestDevice');
 const RequestDeviceDelegate = require('./RequestDeviceDelegate');

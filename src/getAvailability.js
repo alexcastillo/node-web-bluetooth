@@ -1,11 +1,11 @@
-const noble = require('noble');
+const noble = require('./noble');
 
 function getAvailability() {
 	if (noble.state !== 'unknown') {
 		return Promise.resolve(noble.state === 'poweredOn');
 	}
 	return new Promise((resolve, reject) => {
-		const onStateChange = (state) => {
+		const onStateChange = state => {
 			if (state !== 'unknown') {
 				noble.removeListener('stateChange', onStateChange);
 				resolve(state === 'poweredOn');
