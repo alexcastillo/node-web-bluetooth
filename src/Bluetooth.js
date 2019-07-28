@@ -1,4 +1,12 @@
-const noble = require('noble');
+const { platform } = require('os');
+
+let noble;
+if (platform() === 'darwin') {
+	noble = require('noble-mac');
+} else {
+	noble = require('noble');
+}
+
 const EventTarget = require('./EventTarget');
 const requestDevice = require('./requestDevice');
 const RequestDeviceDelegate = require('./RequestDeviceDelegate');
@@ -6,7 +14,7 @@ const InteractiveRequestDeviceDelegate = require('./InteractiveRequestDeviceDele
 const getAvailability = require('./getAvailability');
 
 const bluetooth = new EventTarget();
-noble.on('stateChange', (state) => {
+noble.on('stateChange', state => {
 	bluetooth.emit('onavailabilitychanged', state === 'poweredOn');
 });
 
